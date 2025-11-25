@@ -717,6 +717,80 @@
     
     <!-- Form JavaScript -->
     <script>
+        // Dynamic Keyword Insertion
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        function capitalizeDKI(str) {
+            return str.split(' ').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ');
+        }
+
+        // Apply dynamic keyword insertion on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get URL parameters
+            const keyword = getUrlParameter('keyword') || getUrlParameter('kw');
+            const service = getUrlParameter('service');
+            const location = getUrlParameter('location') || getUrlParameter('city');
+
+            // Update headline if keyword is present
+            if (keyword) {
+                const mainHeadline = document.querySelector('h1');
+                const capitalizedKeyword = capitalizeDKI(keyword);
+
+                // Replace "Home Cleaner" with the keyword
+                mainHeadline.innerHTML = `Find Your Perfect <span class="text-sage sparkle">${capitalizedKeyword}</span> Today`;
+            }
+
+            // Update service dropdown if service parameter is present
+            if (service) {
+                const serviceSelect = document.querySelector('select[name="service_type"]');
+                const serviceValue = service.toLowerCase().replace(/\s+/g, '');
+
+                // Try to match the service to an option
+                for (let option of serviceSelect.options) {
+                    if (option.value === serviceValue || option.text.toLowerCase().includes(service.toLowerCase())) {
+                        serviceSelect.value = option.value;
+                        break;
+                    }
+                }
+            }
+
+            // Update ZIP if location parameter is present (assuming 5-digit zip)
+            if (location && /^\d{5}$/.test(location)) {
+                const zipInput = document.querySelector('input[name="zip"]');
+                zipInput.value = location;
+            }
+
+            // Add hidden fields to form for tracking
+            const form = document.getElementById('leadForm');
+            if (keyword) {
+                const keywordField = document.createElement('input');
+                keywordField.type = 'hidden';
+                keywordField.name = '_keyword';
+                keywordField.value = keyword;
+                form.appendChild(keywordField);
+            }
+
+            // Track UTM parameters
+            const utmParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+            utmParams.forEach(param => {
+                const value = getUrlParameter(param);
+                if (value) {
+                    const field = document.createElement('input');
+                    field.type = 'hidden';
+                    field.name = `_${param}`;
+                    field.value = value;
+                    form.appendChild(field);
+                }
+            });
+        });
+
         let currentStep = 1;
         
         function nextStep(step) {
